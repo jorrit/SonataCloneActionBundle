@@ -1,0 +1,10 @@
+{% if admin.hasAccess('clone', object) and admin.hasRoute('clone') %}
+    <a
+        href="{{ admin.generateObjectUrl('clone', object, actions.link_parameters|default([])) }}"
+        class="btn btn-sm btn-default clone_link"
+        title="{{ 'action_clone'|trans({}, 'SonataCloneActionBundle') }}"
+    >
+        <i class="fa fa-clone" aria-hidden="true"></i>
+        {{ 'action_clone'|trans({}, 'SonataCloneActionBundle') }}
+    </a>
+{% endif %}

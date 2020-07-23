@@ -1,0 +1,39 @@
+{
+    "name": "jorrit/sonata-clone-action-bundle",
+    "description": "Sonata Admin extension that adds a clone action.",
+    "keywords": [
+        "sonata",
+        "admin",
+        "extension",
+        "clone"
+    ],
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jorrit Schippers",
+            "email": "jorrit@ncode.nl"
+        }
+    ],
+    "require": {
+        "php": "^7.2",
+        "sonata-project/admin-bundle": "^3.72.0",
+        "symfony/framework-bundle": "^4.4",
+        "symfony/http-kernel": "^4.4",
+        "symfony/property-access": "^4.4",
+        "symfony/property-info": "^4.4"
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "autoload": {
+        "psr-4": {
+            "Jorrit\\SonataCloneActionBundle\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Jorrit\\SonataCloneActionBundle\\Tests\\": "tests/"
+        }
+    }
+}

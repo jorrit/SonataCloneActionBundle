@@ -1,0 +1,6 @@
+services:
+    Jorrit\SonataCloneActionBundle\Controller\CloneController:
+        class: Jorrit\SonataCloneActionBundle\Controller\CloneController
+        public: true
+        arguments:
+            - '@sonata.admin.pool'
