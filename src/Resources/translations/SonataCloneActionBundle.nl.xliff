@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+    <file source-language="en" datatype="plaintext" original="SonataAdminBundle.en.xliff">
+        <body>
+            <trans-unit id="action_clone">
+                <source>action_clone</source>
+                <target>Klonen</target>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>
