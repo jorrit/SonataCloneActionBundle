@@ -46,12 +46,18 @@ class CloneController extends AbstractController
 
         $controllerName = $admin->getBaseControllerName();
 
-        return $this->forward(
-            $controllerName.'::createAction',
-            [
-                '_sonata_admin' => $request->attributes->get('_sonata_admin'),
-                CloneAdminExtension::REQUEST_ATTRIBUTE => $subject,
-            ]
-        );
+        $routeParameters = [
+            '_sonata_admin' => $request->attributes->get('_sonata_admin'),
+            CloneAdminExtension::REQUEST_ATTRIBUTE => $subject,
+        ];
+
+        // Copy ids of parents.
+        for ($currentAdmin = $admin; $currentAdmin->isChild(); ) {
+            $currentAdmin = $currentAdmin->getParent();
+            $idParameter = $currentAdmin->getIdParameter();
+            $routeParameters[$idParameter] = $request->attributes->get($idParameter);
+        }
+
+        return $this->forward($controllerName.'::createAction', $routeParameters);
     }
 }
