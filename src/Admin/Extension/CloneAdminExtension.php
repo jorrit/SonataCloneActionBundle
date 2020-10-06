@@ -13,7 +13,7 @@ use Symfony\Component\PropertyInfo\PropertyListExtractorInterface;
 
 class CloneAdminExtension extends AbstractAdminExtension
 {
-    const REQUEST_ATTRIBUTE = '_clone_subject';
+    public const REQUEST_ATTRIBUTE = '_clone_subject';
 
     /**
      * @var PropertyListExtractorInterface
@@ -56,7 +56,7 @@ class CloneAdminExtension extends AbstractAdminExtension
 
         foreach ($properties as $property) {
             // Skip identifier fields.
-            if (in_array($property, $idfields)) {
+            if (\in_array($property, $idfields, true)) {
                 continue;
             }
 
