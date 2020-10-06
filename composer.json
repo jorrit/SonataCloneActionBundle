@@ -18,10 +18,10 @@
     "require": {
         "php": "^7.2",
         "sonata-project/admin-bundle": "^3.72.0",
-        "symfony/framework-bundle": "^4.4",
-        "symfony/http-kernel": "^4.4",
-        "symfony/property-access": "^4.4",
-        "symfony/property-info": "^4.4"
+        "symfony/framework-bundle": "^4.4 || ^5.0",
+        "symfony/http-kernel": "^4.4 || ^5.0",
+        "symfony/property-access": "^4.4 || ^5.0",
+        "symfony/property-info": "^4.4 || ^5.0"
     },
     "config": {
         "sort-packages": true
