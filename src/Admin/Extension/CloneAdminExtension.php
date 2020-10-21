@@ -48,11 +48,12 @@ class CloneAdminExtension extends AbstractAdminExtension
         }
 
         $subject = $request->attributes->get(self::REQUEST_ATTRIBUTE);
+        $subjectclass = get_class($subject);
 
-        $idfields = $admin->getModelManager()->getIdentifierFieldNames($admin->getClass());
+        $idfields = $admin->getModelManager()->getIdentifierFieldNames($subjectclass);
         $propertyAccessor = PropertyAccess::createPropertyAccessor();
 
-        $properties = $this->propertyInfoExtractor->getProperties($subject);
+        $properties = $this->propertyInfoExtractor->getProperties($subjectclass);
 
         foreach ($properties as $property) {
             // Skip identifier fields.
