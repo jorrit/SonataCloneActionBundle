@@ -23,6 +23,10 @@
         "symfony/property-access": "^4.4 || ^5.0",
         "symfony/property-info": "^4.4 || ^5.0"
     },
+    "require-dev": {
+        "gedmo/doctrine-extensions": "^2.3.4 || ^3.0",
+        "sonata-project/translation-bundle": "^2.7"
+    },
     "config": {
         "sort-packages": true
     },

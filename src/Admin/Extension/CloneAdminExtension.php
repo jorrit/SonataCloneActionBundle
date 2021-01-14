@@ -2,12 +2,17 @@
 
 namespace Jorrit\SonataCloneActionBundle\Admin\Extension;
 
+use Doctrine\Persistence\ObjectManager;
+use Gedmo\Translatable\TranslatableListener;
+use Jorrit\SonataCloneActionBundle\Controller\CloneController;
 use Sonata\AdminBundle\Admin\AbstractAdminExtension;
 use Sonata\AdminBundle\Admin\AdminInterface;
 use Sonata\AdminBundle\Datagrid\ListMapper;
+use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Route\RouteCollection;
-use Jorrit\SonataCloneActionBundle\Controller\CloneController;
-use Symfony\Component\HttpFoundation\RequestStack;
+use Sonata\TranslationBundle\Model\Gedmo\AbstractPersonalTranslatable;
+use Sonata\TranslationBundle\Model\Gedmo\AbstractPersonalTranslation;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\PropertyInfo\PropertyListExtractorInterface;
 
@@ -21,16 +26,23 @@ class CloneAdminExtension extends AbstractAdminExtension
     private $propertyInfoExtractor;
 
     /**
-     * @var RequestStack
+     * @var ObjectManager
      */
-    private $requestStack;
+    private $entityManager;
+
+    /**
+     * @var ?TranslatableListener
+     */
+    private $translatableListener;
 
     public function __construct(
         PropertyListExtractorInterface $propertyInfoExtractor,
-        RequestStack $requestStack
+        ObjectManager $entityManager,
+        ?TranslatableListener $translatableListener = null
     ) {
         $this->propertyInfoExtractor = $propertyInfoExtractor;
-        $this->requestStack = $requestStack;
+        $this->entityManager = $entityManager;
+        $this->translatableListener = $translatableListener;
     }
 
     public function getAccessMapping(AdminInterface $admin)
@@ -42,7 +54,7 @@ class CloneAdminExtension extends AbstractAdminExtension
 
     public function alterNewInstance(AdminInterface $admin, $object)
     {
-        $request = $this->requestStack->getCurrentRequest();
+        $request = $admin->getRequest();
         if ($request === null || !$request->attributes->has(self::REQUEST_ATTRIBUTE)) {
             return;
         }
@@ -72,6 +84,87 @@ class CloneAdminExtension extends AbstractAdminExtension
             }
 
             $propertyAccessor->setValue($object, $property, $propertyAccessor->getValue($subject, $property));
+        }
+    }
+
+    /**
+     * Store id of subject as hidden field so it can be read in prePersist().
+     *
+     * @param FormMapper $formMapper
+     */
+    public function configureFormFields(FormMapper $formMapper)
+    {
+        $admin = $formMapper->getAdmin();
+
+        $request = $admin->getRequest();
+        if ($request === null) {
+            return;
+        }
+
+        // Read the subject id from the request attribute (on form display) or POST value (on submit).
+        $subjectId = null;
+        if ($request->attributes->has(self::REQUEST_ATTRIBUTE)) {
+            $subject = $request->attributes->get(self::REQUEST_ATTRIBUTE);
+            $subjectId = $admin->getModelManager()->getNormalizedIdentifier($subject);
+        } else {
+            $postValues = $request->request->get($admin->getUniqid());
+            if ($postValues !== null && isset($postValues[self::REQUEST_ATTRIBUTE])) {
+                $subjectId = $postValues[self::REQUEST_ATTRIBUTE];
+            }
+        }
+
+        if ($subjectId !== null) {
+            $formMapper->add(
+                self::REQUEST_ATTRIBUTE,
+                HiddenType::class,
+                [
+                    'data' => $subjectId,
+                    'mapped' => false,
+                ]
+            );
+        }
+    }
+
+    /**
+     * Copy translations before persisting.
+     *
+     * @param AdminInterface $admin
+     * @param object $object
+     */
+    public function prePersist(AdminInterface $admin, $object)
+    {
+        $request = $admin->getRequest();
+        if ($request === null) {
+            return;
+        }
+
+        $postValues = $request->request->get($admin->getUniqid());
+        if ($postValues === null || !isset($postValues[self::REQUEST_ATTRIBUTE])) {
+            return;
+        }
+
+        $subjectId = $postValues[self::REQUEST_ATTRIBUTE];
+        $subject = $admin->getModelManager()->find($admin->getClass(), $subjectId);
+        if (!$subject) {
+            throw new \RuntimeException(sprintf('unable to find the object with id: %s', $subjectId));
+        }
+
+        if ($this->translatableListener !== null && $object instanceof AbstractPersonalTranslatable) {
+            $eventAdapter = new \Gedmo\Translatable\Mapping\Event\Adapter\ORM();
+            $config = $this->translatableListener->getConfiguration($this->entityManager, get_class($subject));
+            $translationClass = $this->translatableListener->getTranslationClass($eventAdapter, $config['useObjectClass']);
+
+            $translationRepository = $this->entityManager->getRepository($translationClass);
+            $translations = $translationRepository->findBy(['object' => $subject]);
+            foreach ($translations as $translation) {
+                /* @var AbstractPersonalTranslation $clonedTranslation */
+                $clonedTranslation = new $translationClass;
+                $clonedTranslation->setLocale($translation->getLocale());
+                $clonedTranslation->setContent($translation->getContent());
+                $clonedTranslation->setField($translation->getField());
+                $object->addTranslation($clonedTranslation);
+                $this->entityManager->persist($clonedTranslation);
+            }
         }
     }
 
