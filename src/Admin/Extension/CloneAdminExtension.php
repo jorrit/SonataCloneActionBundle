@@ -2,7 +2,7 @@
 
 namespace Jorrit\SonataCloneActionBundle\Admin\Extension;
 
-use Doctrine\Persistence\ObjectManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Gedmo\Translatable\TranslatableListener;
 use Jorrit\SonataCloneActionBundle\Controller\CloneController;
 use Sonata\AdminBundle\Admin\AbstractAdminExtension;
@@ -26,7 +26,7 @@ class CloneAdminExtension extends AbstractAdminExtension
     private $propertyInfoExtractor;
 
     /**
-     * @var ObjectManager
+     * @var EntityManagerInterface
      */
     private $entityManager;
 
@@ -37,7 +37,7 @@ class CloneAdminExtension extends AbstractAdminExtension
 
     public function __construct(
         PropertyListExtractorInterface $propertyInfoExtractor,
-        ObjectManager $entityManager,
+        EntityManagerInterface $entityManager,
         ?TranslatableListener $translatableListener = null
     ) {
         $this->propertyInfoExtractor = $propertyInfoExtractor;

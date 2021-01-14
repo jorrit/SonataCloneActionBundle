@@ -24,6 +24,7 @@
         "symfony/property-info": "^4.4 || ^5.0"
     },
     "require-dev": {
+        "doctrine/orm": "2.8",
         "gedmo/doctrine-extensions": "^2.3.4 || ^3.0",
         "sonata-project/translation-bundle": "^2.7"
     },
