@@ -2,6 +2,7 @@
 
 namespace Jorrit\SonataCloneActionBundle\Admin\Extension;
 
+use Doctrine\Common\Util\ClassUtils;
 use Doctrine\ORM\EntityManagerInterface;
 use Gedmo\Translatable\TranslatableListener;
 use Jorrit\SonataCloneActionBundle\Controller\CloneController;
@@ -60,7 +61,7 @@ class CloneAdminExtension extends AbstractAdminExtension
         }
 
         $subject = $request->attributes->get(self::REQUEST_ATTRIBUTE);
-        $subjectclass = get_class($subject);
+        $subjectclass = ClassUtils::getClass($subject);
 
         $idfields = $admin->getModelManager()->getIdentifierFieldNames($subjectclass);
         $propertyAccessor = PropertyAccess::createPropertyAccessor();
@@ -151,7 +152,8 @@ class CloneAdminExtension extends AbstractAdminExtension
 
         if ($this->translatableListener !== null && $object instanceof AbstractPersonalTranslatable) {
             $eventAdapter = new \Gedmo\Translatable\Mapping\Event\Adapter\ORM();
-            $config = $this->translatableListener->getConfiguration($this->entityManager, get_class($subject));
+            $subjectclass = ClassUtils::getClass($subject);
+            $config = $this->translatableListener->getConfiguration($this->entityManager, $subjectclass);
             $translationClass = $this->translatableListener->getTranslationClass($eventAdapter, $config['useObjectClass']);
 
             $translationRepository = $this->entityManager->getRepository($translationClass);
