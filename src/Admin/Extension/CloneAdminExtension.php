@@ -115,14 +115,10 @@ class CloneAdminExtension extends AbstractAdminExtension
         }
 
         if ($subjectId !== null) {
-            $formMapper->add(
-                self::REQUEST_ATTRIBUTE,
-                HiddenType::class,
-                [
-                    'data' => $subjectId,
-                    'mapped' => false,
-                ]
-            );
+            $formMapper->getFormBuilder()->add(self::REQUEST_ATTRIBUTE, HiddenType::class, [
+                'data' => $subjectId,
+                'mapped' => false,
+            ]);
         }
     }
 
