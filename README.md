@@ -10,7 +10,7 @@ when the create form is submitted.
 ## Installation
 
 ```bash
-$ composer require jorrit/sonata-clone-extension-bundle
+$ composer require jorrit/sonata-clone-action-bundle
 ```
 
 ## Setup
