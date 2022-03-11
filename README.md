@@ -1,5 +1,7 @@
 # Sonata Admin Clone Action
 
+[![Latest Stable Version](http://poser.pugx.org/jorrit/sonata-clone-action-bundle/v)](https://packagist.org/packages/jorrit/sonata-clone-action-bundle) [![Total Downloads](http://poser.pugx.org/jorrit/sonata-clone-action-bundle/downloads)](https://packagist.org/packages/jorrit/sonata-clone-action-bundle) [![Latest Unstable Version](http://poser.pugx.org/jorrit/sonata-clone-action-bundle/v/unstable)](https://packagist.org/packages/jorrit/sonata-clone-action-bundle) [![License](http://poser.pugx.org/jorrit/sonata-clone-action-bundle/license)](https://packagist.org/packages/jorrit/sonata-clone-action-bundle) [![PHP Version Require](http://poser.pugx.org/jorrit/sonata-clone-action-bundle/require/php)](https://packagist.org/packages/jorrit/sonata-clone-action-bundle)
+
 Adds a clone action to Sonata Admin. This allows you to add a clone button to
 your list action that leads to a create form with the values of the cloned item
 prefilled.
