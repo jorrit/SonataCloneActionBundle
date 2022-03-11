@@ -4,6 +4,7 @@ namespace Jorrit\SonataCloneActionBundle\Admin\Extension;
 
 use Doctrine\Common\Util\ClassUtils;
 use Doctrine\ORM\EntityManagerInterface;
+use Gedmo\Translatable\Entity\MappedSuperclass\AbstractPersonalTranslation;
 use Gedmo\Translatable\TranslatableListener;
 use Jorrit\SonataCloneActionBundle\Controller\CloneController;
 use Sonata\AdminBundle\Admin\AbstractAdminExtension;
@@ -11,14 +12,13 @@ use Sonata\AdminBundle\Admin\AdminInterface;
 use Sonata\AdminBundle\Datagrid\ListMapper;
 use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Route\RouteCollection;
-use Sonata\TranslationBundle\Model\Gedmo\AbstractPersonalTranslatable;
-use Sonata\TranslationBundle\Model\Gedmo\AbstractPersonalTranslation;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\PropertyInfo\PropertyListExtractorInterface;
 
 class CloneAdminExtension extends AbstractAdminExtension
 {
+
     public const REQUEST_ATTRIBUTE = '_clone_subject';
 
     /**
@@ -40,7 +40,8 @@ class CloneAdminExtension extends AbstractAdminExtension
         PropertyListExtractorInterface $propertyInfoExtractor,
         EntityManagerInterface $entityManager,
         ?TranslatableListener $translatableListener = null
-    ) {
+    )
+    {
         $this->propertyInfoExtractor = $propertyInfoExtractor;
         $this->entityManager = $entityManager;
         $this->translatableListener = $translatableListener;
@@ -130,6 +131,10 @@ class CloneAdminExtension extends AbstractAdminExtension
      */
     public function prePersist(AdminInterface $admin, $object)
     {
+        if ($this->translatableListener === null) {
+            return;
+        }
+
         $request = $admin->getRequest();
         if ($request === null) {
             return;
@@ -141,27 +146,82 @@ class CloneAdminExtension extends AbstractAdminExtension
         }
 
         $subjectId = $postValues[self::REQUEST_ATTRIBUTE];
+        $defaultLocale = $this->translatableListener->getDefaultLocale();
+        $meta = $this->entityManager->getClassMetadata(get_class($object));
+        $objectLocale = $this->translatableListener->getTranslatableLocale($object, $meta, $this->entityManager);
+
+        // Load the original object in the default locale.
+        $this->translatableListener->setTranslatableLocale($defaultLocale);
         $subject = $admin->getModelManager()->find($admin->getClass(), $subjectId);
+        $this->translatableListener->setTranslatableLocale($objectLocale);
         if (!$subject) {
             throw new \RuntimeException(sprintf('unable to find the object with id: %s', $subjectId));
         }
 
-        if ($this->translatableListener !== null && $object instanceof AbstractPersonalTranslatable) {
-            $eventAdapter = new \Gedmo\Translatable\Mapping\Event\Adapter\ORM();
-            $subjectclass = ClassUtils::getClass($subject);
-            $config = $this->translatableListener->getConfiguration($this->entityManager, $subjectclass);
-            $translationClass = $this->translatableListener->getTranslationClass($eventAdapter, $config['useObjectClass']);
+        $subjectclass = ClassUtils::getClass($subject);
+        $config = $this->translatableListener->getConfiguration($this->entityManager, $subjectclass);
+        if (empty($config)) {
+            return;
+        }
 
-            $translationRepository = $this->entityManager->getRepository($translationClass);
-            $translations = $translationRepository->findBy(['object' => $subject]);
-            foreach ($translations as $translation) {
-                /* @var AbstractPersonalTranslation $clonedTranslation */
-                $clonedTranslation = new $translationClass;
-                $clonedTranslation->setLocale($translation->getLocale());
-                $clonedTranslation->setContent($translation->getContent());
-                $clonedTranslation->setField($translation->getField());
-                $object->addTranslation($clonedTranslation);
-                $this->entityManager->persist($clonedTranslation);
+        $eventAdapter = new \Gedmo\Translatable\Mapping\Event\Adapter\ORM();
+        $translationClass = $this->translatableListener->getTranslationClass($eventAdapter, $config['useObjectClass']);
+
+        $translationRepository = $this->entityManager->getRepository($translationClass);
+        $translations = $translationRepository->findBy(['object' => $subject]);
+        foreach ($translations as $translation) {
+            if ($translation->getLocale() === $objectLocale) {
+                // When editing a non-default locale while cloning, don't copy these values from the original subject.
+                continue;
+            }
+            /* @var AbstractPersonalTranslation $clonedTranslation */
+            $clonedTranslation = new $translationClass;
+            $clonedTranslation->setLocale($translation->getLocale());
+            $clonedTranslation->setContent($translation->getContent());
+            $clonedTranslation->setField($translation->getField());
+            $clonedTranslation->setObject($object);
+            $this->entityManager->persist($clonedTranslation);
+        }
+
+        // Handle translating a different locale than the default.
+        if ($objectLocale !== $defaultLocale) {
+            // Set the locale of $object to the default and set the fields to the original fields.
+            $reflectionClass = $meta->getReflectionClass();
+            \assert($reflectionClass !== null);
+
+            $localeProperty = $reflectionClass->getProperty($config['locale']);
+            $localeProperty->setAccessible(true);
+            $localeProperty->setValue($object, $defaultLocale);
+
+            // Handle all translatable fields.
+            foreach ($config['fields'] as $fieldName) {
+                $fieldProperty = $meta->getReflectionProperty($fieldName);
+                if ($fieldProperty === null) {
+                    continue;
+                }
+
+                $defaultValue = $fieldProperty->getValue($subject);
+
+                $fieldIsFallback = !empty($config['fallback'][$fieldName]);
+                $translatedFieldValue = $fieldProperty->getValue($object);
+
+                if ($fieldIsFallback && $translatedFieldValue === $defaultValue) {
+                    $translatedFieldValue = null;
+                }
+
+                // Add the translation for the non-default locale.
+                if ($translatedFieldValue !== null) {
+                    /* @var AbstractPersonalTranslation $clonedTranslation */
+                    $clonedTranslation = new $translationClass;
+                    $clonedTranslation->setLocale($objectLocale);
+                    $clonedTranslation->setContent($translatedFieldValue);
+                    $clonedTranslation->setField($fieldName);
+                    $clonedTranslation->setObject($object);
+                    $this->entityManager->persist($clonedTranslation);
+                }
+
+                // Set the default translation.
+                $fieldProperty->setValue($object, $defaultValue);
             }
         }
     }
