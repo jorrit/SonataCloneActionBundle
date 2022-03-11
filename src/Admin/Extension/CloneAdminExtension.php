@@ -18,7 +18,6 @@ use Symfony\Component\PropertyInfo\PropertyListExtractorInterface;
 
 class CloneAdminExtension extends AbstractAdminExtension
 {
-
     public const REQUEST_ATTRIBUTE = '_clone_subject';
 
     /**
@@ -47,14 +46,14 @@ class CloneAdminExtension extends AbstractAdminExtension
         $this->translatableListener = $translatableListener;
     }
 
-    public function getAccessMapping(AdminInterface $admin)
+    public function getAccessMapping(AdminInterface $admin): array
     {
         return [
             'clone' => 'CREATE',
         ];
     }
 
-    public function alterNewInstance(AdminInterface $admin, $object)
+    public function alterNewInstance(AdminInterface $admin, $object): void
     {
         $request = $admin->getRequest();
         if ($request === null || !$request->attributes->has(self::REQUEST_ATTRIBUTE)) {
@@ -92,11 +91,11 @@ class CloneAdminExtension extends AbstractAdminExtension
     /**
      * Store id of subject as hidden field so it can be read in prePersist().
      *
-     * @param FormMapper $formMapper
+     * @param FormMapper $form
      */
-    public function configureFormFields(FormMapper $formMapper)
+    public function configureFormFields(FormMapper $form): void
     {
-        $admin = $formMapper->getAdmin();
+        $admin = $form->getAdmin();
 
         $request = $admin->getRequest();
         if ($request === null) {
@@ -116,7 +115,7 @@ class CloneAdminExtension extends AbstractAdminExtension
         }
 
         if ($subjectId !== null) {
-            $formMapper->getFormBuilder()->add(self::REQUEST_ATTRIBUTE, HiddenType::class, [
+            $form->getFormBuilder()->add(self::REQUEST_ATTRIBUTE, HiddenType::class, [
                 'data' => $subjectId,
                 'mapped' => false,
             ]);
@@ -129,7 +128,7 @@ class CloneAdminExtension extends AbstractAdminExtension
      * @param AdminInterface $admin
      * @param object $object
      */
-    public function prePersist(AdminInterface $admin, $object)
+    public function prePersist(AdminInterface $admin, $object): void
     {
         if ($this->translatableListener === null) {
             return;
@@ -226,7 +225,7 @@ class CloneAdminExtension extends AbstractAdminExtension
         }
     }
 
-    public function configureRoutes(AdminInterface $admin, RouteCollection $collection)
+    public function configureRoutes(AdminInterface $admin, RouteCollection $collection): void
     {
         $collection->add(
             'clone',
@@ -237,12 +236,12 @@ class CloneAdminExtension extends AbstractAdminExtension
         );
     }
 
-    public function configureListFields(ListMapper $listMapper)
+    public function configureListFields(ListMapper $list): void
     {
-        $itemkeys = $listMapper->keys();
+        $itemkeys = $list->keys();
 
         foreach ($itemkeys as $itemkey) {
-            $item = $listMapper->get($itemkey);
+            $item = $list->get($itemkey);
             if (($actions = $item->getOption('actions')) && isset($actions['clone'])) {
                 $actions['clone']['template'] = '@SonataCloneAction/SonataAdmin/CRUD/list__action_clone.html.twig';
                 $item->setOption('actions', $actions);
