@@ -12,6 +12,7 @@ use Sonata\AdminBundle\Admin\AdminInterface;
 use Sonata\AdminBundle\Datagrid\ListMapper;
 use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Route\RouteCollection;
+use Sonata\AdminBundle\Route\RouteCollectionInterface;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\PropertyInfo\PropertyListExtractorInterface;
@@ -56,7 +57,7 @@ class CloneAdminExtension extends AbstractAdminExtension
     public function alterNewInstance(AdminInterface $admin, $object): void
     {
         $request = $admin->getRequest();
-        if ($request === null || !$request->attributes->has(self::REQUEST_ATTRIBUTE)) {
+        if (!$request->attributes->has(self::REQUEST_ATTRIBUTE)) {
             return;
         }
 
@@ -98,9 +99,6 @@ class CloneAdminExtension extends AbstractAdminExtension
         $admin = $form->getAdmin();
 
         $request = $admin->getRequest();
-        if ($request === null) {
-            return;
-        }
 
         // Read the subject id from the request attribute (on form display) or POST value (on submit).
         $subjectId = null;
@@ -108,10 +106,8 @@ class CloneAdminExtension extends AbstractAdminExtension
             $subject = $request->attributes->get(self::REQUEST_ATTRIBUTE);
             $subjectId = $admin->getModelManager()->getNormalizedIdentifier($subject);
         } else {
-            $postValues = $request->request->get($admin->getUniqid());
-            if ($postValues !== null && isset($postValues[self::REQUEST_ATTRIBUTE])) {
-                $subjectId = $postValues[self::REQUEST_ATTRIBUTE];
-            }
+            $postValues = $request->request->all();
+            $subjectId = $postValues[$admin->getUniqid()][self::REQUEST_ATTRIBUTE] ?? null;
         }
 
         if ($subjectId !== null) {
@@ -135,16 +131,13 @@ class CloneAdminExtension extends AbstractAdminExtension
         }
 
         $request = $admin->getRequest();
-        if ($request === null) {
+
+        $postValues = $request->request->all($admin->getUniqid());
+        $subjectId = $postValues[$admin->getUniqid()][self::REQUEST_ATTRIBUTE] ?? null;
+        if ($subjectId === null) {
             return;
         }
 
-        $postValues = $request->request->get($admin->getUniqid());
-        if ($postValues === null || !isset($postValues[self::REQUEST_ATTRIBUTE])) {
-            return;
-        }
-
-        $subjectId = $postValues[self::REQUEST_ATTRIBUTE];
         $defaultLocale = $this->translatableListener->getDefaultLocale();
         $meta = $this->entityManager->getClassMetadata(get_class($object));
         $objectLocale = $this->translatableListener->getTranslatableLocale($object, $meta, $this->entityManager);
@@ -225,7 +218,7 @@ class CloneAdminExtension extends AbstractAdminExtension
         }
     }
 
-    public function configureRoutes(AdminInterface $admin, RouteCollection $collection): void
+    public function configureRoutes(AdminInterface $admin, RouteCollectionInterface $collection): void
     {
         $collection->add(
             'clone',
