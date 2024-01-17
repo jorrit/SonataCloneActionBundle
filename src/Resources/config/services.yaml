@@ -2,5 +2,10 @@ services:
     Jorrit\SonataCloneActionBundle\Controller\CloneController:
         class: Jorrit\SonataCloneActionBundle\Controller\CloneController
         public: true
+        tags:
+            - 'controller.service_arguments'
+        calls:
+            -   method: setContainer
+                arguments: [ '@service_container' ]
         arguments:
             - '@sonata.admin.pool'
