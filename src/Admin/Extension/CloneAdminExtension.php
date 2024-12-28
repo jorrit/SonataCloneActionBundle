@@ -7,6 +7,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Gedmo\Translatable\Entity\MappedSuperclass\AbstractPersonalTranslation;
 use Gedmo\Translatable\TranslatableListener;
 use Jorrit\SonataCloneActionBundle\Controller\CloneController;
+use RuntimeException;
 use Sonata\AdminBundle\Admin\AbstractAdminExtension;
 use Sonata\AdminBundle\Admin\AdminInterface;
 use Sonata\AdminBundle\Datagrid\ListMapper;
@@ -20,21 +21,9 @@ use Symfony\Component\PropertyInfo\PropertyListExtractorInterface;
 class CloneAdminExtension extends AbstractAdminExtension
 {
     public const REQUEST_ATTRIBUTE = '_clone_subject';
-
-    /**
-     * @var PropertyListExtractorInterface
-     */
-    private $propertyInfoExtractor;
-
-    /**
-     * @var EntityManagerInterface
-     */
-    private $entityManager;
-
-    /**
-     * @var ?TranslatableListener
-     */
-    private $translatableListener;
+    private PropertyListExtractorInterface $propertyInfoExtractor;
+    private EntityManagerInterface $entityManager;
+    private ?TranslatableListener $translatableListener;
 
     public function __construct(
         PropertyListExtractorInterface $propertyInfoExtractor,
@@ -124,7 +113,7 @@ class CloneAdminExtension extends AbstractAdminExtension
      * @param AdminInterface $admin
      * @param object $object
      */
-    public function prePersist(AdminInterface $admin, $object): void
+    public function prePersist(AdminInterface $admin, object $object): void
     {
         if ($this->translatableListener === null) {
             return;
@@ -147,7 +136,7 @@ class CloneAdminExtension extends AbstractAdminExtension
         $subject = $admin->getModelManager()->find($admin->getClass(), $subjectId);
         $this->translatableListener->setTranslatableLocale($objectLocale);
         if (!$subject) {
-            throw new \RuntimeException(sprintf('unable to find the object with id: %s', $subjectId));
+            throw new RuntimeException(sprintf('unable to find the object with id: %s', $subjectId));
         }
 
         $subjectclass = ClassUtils::getClass($subject);

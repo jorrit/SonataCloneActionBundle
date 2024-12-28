@@ -3,33 +3,32 @@
 namespace Jorrit\SonataCloneActionBundle\Controller;
 
 use Jorrit\SonataCloneActionBundle\Admin\Extension\CloneAdminExtension;
+use RuntimeException;
 use Sonata\AdminBundle\Admin\Pool;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class CloneController extends AbstractController
 {
-    /**
-     * @var Pool
-     */
-    private $pool;
+    private Pool $pool;
 
     public function __construct(Pool $pool)
     {
         $this->pool = $pool;
     }
 
-    public function __invoke(Request $request)
+    public function __invoke(Request $request): Response
     {
         if (!$request->attributes->has('_sonata_admin')) {
-            return $this->createNotFoundException('Route should have _sonata_admin attribute');
+            throw $this->createNotFoundException('Route should have _sonata_admin attribute');
         }
 
         try {
             $admin = $this->pool->getAdminByAdminCode($request->attributes->get('_sonata_admin'));
         } catch (ServiceNotFoundException $e) {
-            throw new \RuntimeException('Unable to find the Admin instance', $e->getCode(), $e);
+            throw new RuntimeException('Unable to find the Admin instance', $e->getCode(), $e);
         }
 
         // Check if the user has clone permission.
