@@ -12,7 +12,6 @@ use Sonata\AdminBundle\Admin\AbstractAdminExtension;
 use Sonata\AdminBundle\Admin\AdminInterface;
 use Sonata\AdminBundle\Datagrid\ListMapper;
 use Sonata\AdminBundle\Form\FormMapper;
-use Sonata\AdminBundle\Route\RouteCollection;
 use Sonata\AdminBundle\Route\RouteCollectionInterface;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\PropertyAccess\PropertyAccess;
@@ -20,7 +19,7 @@ use Symfony\Component\PropertyInfo\PropertyListExtractorInterface;
 
 class CloneAdminExtension extends AbstractAdminExtension
 {
-    public const REQUEST_ATTRIBUTE = '_clone_subject';
+    public const string REQUEST_ATTRIBUTE = '_clone_subject';
     private PropertyListExtractorInterface $propertyInfoExtractor;
     private EntityManagerInterface $entityManager;
     private ?TranslatableListener $translatableListener;
@@ -90,7 +89,6 @@ class CloneAdminExtension extends AbstractAdminExtension
         $request = $admin->getRequest();
 
         // Read the subject id from the request attribute (on form display) or POST value (on submit).
-        $subjectId = null;
         if ($request->attributes->has(self::REQUEST_ATTRIBUTE)) {
             $subject = $request->attributes->get(self::REQUEST_ATTRIBUTE);
             $subjectId = $admin->getModelManager()->getNormalizedIdentifier($subject);
@@ -171,12 +169,11 @@ class CloneAdminExtension extends AbstractAdminExtension
             \assert($reflectionClass !== null);
 
             $localeProperty = $reflectionClass->getProperty($config['locale']);
-            $localeProperty->setAccessible(true);
             $localeProperty->setValue($object, $defaultLocale);
 
             // Handle all translatable fields.
             foreach ($config['fields'] as $fieldName) {
-                $fieldProperty = $meta->getReflectionProperty($fieldName);
+                $fieldProperty = $meta->getPropertyAccessor($fieldName);
                 if ($fieldProperty === null) {
                     continue;
                 }

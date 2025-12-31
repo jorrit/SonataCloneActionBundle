@@ -5,6 +5,7 @@ namespace Jorrit\SonataCloneActionBundle\Controller;
 use Jorrit\SonataCloneActionBundle\Admin\Extension\CloneAdminExtension;
 use RuntimeException;
 use Sonata\AdminBundle\Admin\Pool;
+use Sonata\AdminBundle\BCLayer\BCHelper;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
@@ -35,7 +36,7 @@ class CloneController extends AbstractController
         $admin->checkAccess('clone');
 
         // Fetch the original item and check SHOW access.
-        $id = $request->get($admin->getIdParameter());
+        $id = BCHelper::getFromRequest($request, $admin->getIdParameter());
         $subject = $admin->getObject($id);
         if (!$subject) {
             throw $this->createNotFoundException(sprintf('unable to find the object with id: %s', $id));

@@ -16,12 +16,12 @@
         }
     ],
     "require": {
-        "php": "^8.0",
+        "php": "^8.3",
         "sonata-project/admin-bundle": "^4.0",
-        "symfony/framework-bundle": "^5.0 || ^6.0",
-        "symfony/http-kernel": "^5.1.5 || ^6.0",
-        "symfony/property-access": "^5.0 || ^6.0",
-        "symfony/property-info": "^5.0 || ^6.0"
+        "symfony/framework-bundle": "^6.4 || ^7.0",
+        "symfony/http-kernel": "^6.4 || ^7.0",
+        "symfony/property-access": "^6.4 || ^7.0",
+        "symfony/property-info": "^6.4 || ^7.0"
     },
     "require-dev": {
         "doctrine/orm": "^3.3",
